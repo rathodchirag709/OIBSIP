@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Temperature Converter</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* deep navy */
+      --card:#0b1220;
+      --accent:#60a5fa;
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: linear-gradient(180deg, #071023 0%, #061323 100%);
+      color: #e6eef8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      width:100%;
+      max-width:720px;
+      background: linear-gradient(180deg,var(--glass), var(--glass-2));
+      border-radius:14px;
+      padding:28px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.7);
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px) saturate(1.1);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .logo{
+      width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7dd3fc);
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:#02204a;font-size:18px;box-shadow:0 6px 18px rgba(96,165,250,0.12);
+    }
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 200px;gap:16px;align-items:center;margin-top:14px}
+    @media (max-width:620px){.grid{grid-template-columns:1fr;}}
+
+    .controls{display:flex;flex-direction:column;gap:12px}
+    label{font-size:13px;color:var(--muted);}
+    input[type="number"], select{
+      width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:15px;
+      outline:none;box-shadow:inset 0 -1px 0 rgba(255,255,255,0.01);
+    }
+    .row{display:flex;gap:10px}
+    .row > *{flex:1}
+
+    .result-card{background:linear-gradient(0deg,#051428 0%, #071422 100%);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);text-align:center}
+    .result-value{font-size:36px;font-weight:700;letter-spacing:0.4px}
+    .result-unit{font-size:14px;color:var(--muted);margin-top:6px}
+
+    .actions{display:flex;gap:10px;margin-top:14px}
+    button{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#012038;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center}
+
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <header>
+      <div class="logo">TC</div>
+      <div>
+        <h1>Temperature Converter</h1>
+        <p class="lead">Convert between Celsius, Fahrenheit and Kelvin — live.</p>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="converter">
+      <div class="controls">
+        <div>
+          <label for="inputValue">Value</label>
+          <input id="inputValue" type="number" step="any" inputmode="decimal" value="25" />
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="fromUnit">From</label>
+            <select id="fromUnit">
+              <option value="C">Celsius (°C)</option>
+              <option value="F">Fahrenheit (°F)</option>
+              <option value="K">Kelvin (K)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="toUnit">To</label>
+            <select id="toUnit">
+              <option value="F">Fahrenheit (°F)</option>
+              <option value="C">Celsius (°C)</option>
+              <option value="K">Kelvin (K)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="convertBtn">Convert</button>
+          <button id="swapBtn" class="ghost">Swap</button>
+          <button id="resetBtn" class="ghost">Reset</button>
+        </div>
+
+        <p class="small">Tip: change the number or units and hit Convert — the result updates immediately.</p>
+      </div>
+
+      <div>
+        <div class="result-card" aria-live="polite">
+          <div class="result-value" id="result">77</div>
+          <div class="result-unit" id="resultUnit">°F</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>Built with HTML, CSS &amp; JavaScript — precise to two decimals.</footer>
+  </main>
+
+  <script>
+    // conversion utility functions
+    const toCelsius = (value, from) => {
+      const v = Number(value);
+      if (from === 'C') return v;
+      if (from === 'F') return (v - 32) * (5/9);
+      if (from === 'K') return v - 273.15;
+      return NaN;
+    }
+    const fromCelsius = (c, to) => {
+      const v = Number(c);
+      if (to === 'C') return v;
+      if (to === 'F') return (v * (9/5)) + 32;
+      if (to === 'K') return v + 273.15;
+      return NaN;
+    }
+
+    // DOM
+    const inputValue = document.getElementById('inputValue');
+    const fromUnit = document.getElementById('fromUnit');
+    const toUnit = document.getElementById('toUnit');
+    const resultEl = document.getElementById('result');
+    const resultUnitEl = document.getElementById('resultUnit');
+    const convertBtn = document.getElementById('convertBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function formatNum(n){
+      if (!isFinite(n)) return '—';
+      // show up to 2 decimal places, but drop trailing zeros
+      return Number.parseFloat(n).toFixed(2).replace(/\.00$|0$/, '');
+    }
+
+    function convert(){
+      const val = inputValue.value;
+      const from = fromUnit.value;
+      const to = toUnit.value;
+      if (val === '' || isNaN(Number(val))) {
+        resultEl.textContent = '—';
+        resultUnitEl.textContent = '';
+        return;
+      }
+      const c = toCelsius(val, from);
+      const out = fromCelsius(c, to);
+      resultEl.textContent = formatNum(out);
+      resultUnitEl.textContent = (to === 'C' ? '°C' : (to === 'F' ? '°F' : 'K'));
+    }
+
+    // live convert on input changes
+    inputValue.addEventListener('input', convert);
+    fromUnit.addEventListener('change', convert);
+    toUnit.addEventListener('change', convert);
+
+    convertBtn.addEventListener('click', (e)=>{ e.preventDefault(); convert(); });
+
+    swapBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const a = fromUnit.value;
+      fromUnit.value = toUnit.value;
+      toUnit.value = a;
+      convert();
+    });
+
+    resetBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      inputValue.value = 25;
+      fromUnit.value = 'C';
+      toUnit.value = 'F';
+      convert();
+    });
+
+    // initial render
+    convert();
+  </script>
+</body>
+</html>
